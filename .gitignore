@@ -1,0 +1,4 @@
+models/
+venv/
+*.gguf
+rnd.py
