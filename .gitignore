@@ -1,4 +1,4 @@
-models/
 venv/
-*.gguf
 rnd.py
+models/*
+!models/README.md
