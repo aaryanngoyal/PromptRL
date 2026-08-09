@@ -48,7 +48,7 @@ class PromptHarness:
         instruction, never the data.
         """
         user_content = f"{prompt_template}\n\nText: {article}"
-        return f"<s>[INST] {user_content} [/INST]"
+        return f"[INST] {user_content} [/INST]"
 
     def _parse_response(self, text: str) -> int:
         """
