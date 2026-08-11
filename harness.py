@@ -15,7 +15,7 @@ class PromptHarness:
         self,
         model_path: str = "models/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
         n_ctx: int = 2048,
-        n_gpu_layers: int = 0,  
+        n_gpu_layers: int = 20, # 0 for CPU and >0 for GPU acceleration
         eval_size: int = 150, #kept at 150 for testing to manage time due to cpu constraints
         n_threads: int = 6,  
         seed: int = 42,
@@ -33,7 +33,7 @@ class PromptHarness:
         )
 
         self.temperature = 0.1
-        self.max_tokens = 8  
+        self.max_tokens = 20  
 
         raw = load_dataset("fancyzhx/ag_news", split="test")
         self.eval_data = raw.select(range(eval_size))
@@ -103,7 +103,7 @@ class PromptHarness:
 
         accuracy = correct / total
         return accuracy
-def debug_inspect(self, prompt_template: str, n: int = 10) -> None:
+    def debug_inspect(self, prompt_template: str, n: int = 10) -> None:
         """
         Debugging helper. NOT part of the reward pipeline. Prints the raw model output, alongside the true label and what the  parser mapped it to. Use this to see why a prompt is scoring the way it does, instead of just the final accuracy number.
         """
@@ -161,5 +161,6 @@ if __name__ == "__main__":
         results[label] = accuracy
         print(f"[{label}] accuracy: {accuracy:.4f}  |  prompt: {prompt!r}")
 
-
+    print("\n--- Debug_inspect check : wrong_categories which gave unexpected results ---")
+    harness.debug_inspect(test_prompts["wrong_categories"])
    
