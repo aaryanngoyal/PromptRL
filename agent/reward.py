@@ -4,9 +4,10 @@ class RewardCalculator:
     Reward Calculation
     """
 
-    def __init__(self, prompt_harness, evals=3):
+    def __init__(self, prompt_harness, batch_size=5, num_evals=3):
         self.prompt_harness = prompt_harness
-        self.evals = evals
+        self.num_evals = num_evals
+        self.batch = prompt_harness.eval_data.select(range(batch_size))
 
     def get_stable_reward(self, prompt):
 
@@ -15,12 +16,12 @@ class RewardCalculator:
         Reduce noise
         """
 
-        accuracies = []
+        total = 0.0
 
-        for _ in range(self.evals):
+        for example in self.batch:
+            for _ in range(self.num_evals):
+                total += self.prompt_harness.evaluate_single(
+                    prompt, example["text"], example["label"]
+                )
 
-            accuracy = self.prompt_harness.evaluate(prompt)
-            accuracies.append(accuracy)
-
-        avg_accuracy = sum(accuracies) / len(accuracies)
-        return avg_accuracy
+        return total / (len(self.batch) * self.num_evals)

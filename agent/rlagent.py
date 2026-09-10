@@ -37,6 +37,13 @@ class RLAgent:
         action_func = self.action_space.actions[action_index]
         new_prompt = action_func(prompt)
 
+        if not isinstance(new_prompt, str):
+            raise TypeError(
+                f"Action '{action_func.__name__}' returned "
+                f"{type(new_prompt).__name__}, expected str. "
+                f"Value: {new_prompt!r}"
+            )
+
         reward = self.reward_calc.get_stable_reward(new_prompt)
 
         self.update_q_table(prompt, action_index, reward, new_prompt)
@@ -94,13 +101,15 @@ class RLAgent:
 agentharness = PromptHarness()  
 action_space = ActionSpace()
 state_rep = StateRepresentation(action_space)
-reward_calc = RewardCalculator(agentharness, evals=3)
+reward_calc = RewardCalculator(agentharness, num_evals=3)
 
 # Create agent
 agent = RLAgent(action_space, state_rep, reward_calc)
 
+test_article = agentharness.eval_data[0]
+
 # Initial prompt
-initial_prompt = "Apple Inc. shares surged 5% after strong earnings report... Classify the following news article into a category:"
+initial_prompt = "Classify the following news article into a category:"
 
 # Train the agent
 best_prompt, best_reward = agent.train(initial_prompt, episodes=50)

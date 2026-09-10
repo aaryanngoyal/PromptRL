@@ -41,9 +41,11 @@ class ActionSpace:
         """
 
         lines = prompt.split('\n\n')
-        if len(lines) > 1 and 'Example: ' in lines[1]:
-            modified_prompt = '\n\n'.join(lines[1])
-            self.applied_modification.remove('shot_example')
+        if lines and lines[0].startswith("Example:"):
+            modified_prompt = '\n\n'.join(lines[1:])
+
+            if 'shot_example' in self.applied_modification:
+                self.applied_modification.remove('shot_example')
             return modified_prompt
         return prompt
 
@@ -66,7 +68,8 @@ class ActionSpace:
 
         for marker in ["Answer with only one word", "Do not use punctuation"]:
             prompt = prompt.replace(marker, "")
-        prompt = prompt.replace("  ", " ").split()
+        prompt = " ".join(prompt.replace("  ", " ").split())
+
         if "format_clarifier" in self.applied_modification:
             self.applied_modification.remove('format_clarifier')
         return prompt
@@ -81,6 +84,7 @@ class ActionSpace:
         simplified = " ".join([word for word in prompt.split()
                               if any(key in word for key in keywords)])
         if simplified:
+            
             modified_prompt = simplified + " the article"
             self.applied_modification.append("simplified")
             return modified_prompt        

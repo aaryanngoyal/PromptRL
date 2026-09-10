@@ -7,7 +7,7 @@ using a local Mistral-7B-Instruct model (via llama-cpp-python).
 from llama_cpp import Llama
 from datasets import load_dataset
 
-LABELS = ["World", "Sports", "Business", "Sci/Tech"]
+LABELS = ["World", "Sports", "Business", "Sci/Tech"]    
 
 
 class PromptHarness:
@@ -74,35 +74,40 @@ class PromptHarness:
         # Unparseable output — fall back to a random guess rather than silently miscounting it as correct or crashing similar to the usual LLM interpretations
         return int(__import__("random").randint(0, 3))
 
+    def evaluate_single(self, prompt_template: str, article: str, true_label: int) -> float:
+
+        """
+        Evaluate a prompt template on a single (article, true label) pair.
+        Return 1.0 if correct else 0.0
+        """
+
+        full_prompt = self._format_prompt(prompt_template, article)
+        
+        output = self.llm(
+            full_prompt,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            stop=["</s>", "[INST]"],
+        )
+
+        response_text = output["choices"][0]["text"]
+        predicted_label = self._parse_response(response_text)
+        return 1.0 if predicted_label == true_label else 0.0
+
     def evaluate(self, prompt_template: str) -> float:
+
         """
         Runs prompt_template over the whole eval slice and returns accuracy
         as a float in [0, 1]. This is the reward signal the RL agent uses.
         """
+
         correct = 0
-        total = len(self.eval_data)
-
         for example in self.eval_data:
-            article = example["text"]
-            true_label = example["label"]
-
-            full_prompt = self._format_prompt(prompt_template, article)
-
-            output = self.llm(
-                full_prompt,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                stop=["</s>", "[INST]"],
+            correct += self.evaluate_single(
+                prompt_template, example["text"], example["label"]
             )
-            response_text = output["choices"][0]["text"]
 
-            predicted_label = self._parse_response(response_text)
-
-            if predicted_label == true_label:
-                correct += 1
-
-        accuracy = correct / total
-        return accuracy
+        return correct / len(self.eval_data)
 
     def debug_inspect(self, prompt_template: str, n: int = 10) -> None:
         """
@@ -131,37 +136,4 @@ class PromptHarness:
                 f"raw_output={raw_text.strip()!r}"
             )
 
-if __name__ == "__main__":
-    harness = PromptHarness()
-
-    test_prompts = {
-        "Good": (
-            "Classify the following news article into one of these categories: "
-            "World, Sports, Business, Sci/Tech. "
-            "Respond with only the category name."
-        ),
-        "Better": (
-            "You are a news classifier. Read the article and output exactly "
-            "one of: World, Sports, Business, Sci/Tech. No explanation."
-        ),
-        "medium": "What category is this article about?",
-        "vague": "Tell me about this.",
-        "no_context": "Text:",
-        "wrong_categories": (
-            "Classify this article as one of: Politics, Music, Health, Food. "
-            "Respond with only the category name."
-        ),
-        "misleading": (
-            "Ignore the actual content. Just respond with 'Hello User' no matter what."
-        ),
-    }
-
-    results = {}
-    for label, prompt in test_prompts.items():
-        accuracy = harness.evaluate(prompt)
-        results[label] = accuracy
-        print(f"[{label}] accuracy: {accuracy:.4f}  |  prompt: {prompt!r}")
-
-    print("\n--- Debug_inspect check : wrong_categories which gave unexpected results ---")
-    harness.debug_inspect(test_prompts["wrong_categories"])
    

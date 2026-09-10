@@ -10,7 +10,7 @@ class StateRepresentation:
         Using prompt text as state key
         """
 
-        return ' '.join(prompt.split()).strip()
+        return ' '.join(prompt.split())
 
     def get_q_value(self, prompt):
 
