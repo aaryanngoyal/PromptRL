@@ -22,7 +22,7 @@ class StateRepresentation:
         if state_key not in self.q_table:
 
             # Initialize all actions with 0.0
-            self.q_table[state_key] = {action: 0.0 for action in range(len(self.action_space))}
+            self.q_table[state_key] = {action: 0.0 for action in range(len(self.action_space.actions))}
 
         return self.q_table[state_key]
 

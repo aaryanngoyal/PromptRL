@@ -1,8 +1,3 @@
-import random
-from harness import PromptHarness
-
-prompt_harness = PromptHarness()
-
 class RewardCalculator:
 
     """

@@ -103,6 +103,7 @@ class PromptHarness:
 
         accuracy = correct / total
         return accuracy
+
     def debug_inspect(self, prompt_template: str, n: int = 10) -> None:
         """
         Debugging helper. NOT part of the reward pipeline. Prints the raw model output, alongside the true label and what the  parser mapped it to. Use this to see why a prompt is scoring the way it does, instead of just the final accuracy number.
