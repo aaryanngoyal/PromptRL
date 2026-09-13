@@ -17,7 +17,8 @@ class PromptHarness:
         n_ctx: int = 2048,
         n_gpu_layers: int = 20, # 0 for CPU and >0 for GPU acceleration
         eval_size: int = 150, #kept at 150 for testing to manage time due to cpu constraints
-        n_threads: int = 6,  
+        n_threads: int = 6,
+        use_cache=True,  
         seed: int = 42,
     ):
         # --- Load the LLM ---
@@ -32,8 +33,10 @@ class PromptHarness:
             verbose=False,
         )
 
-        self.temperature = 0.1
+        self.temperature = 0.0
         self.max_tokens = 20  
+        self._cache = {}
+        self.use_cache = use_cache
 
         raw = load_dataset("fancyzhx/ag_news", split="test")
         self.eval_data = raw.select(range(eval_size))
@@ -81,18 +84,26 @@ class PromptHarness:
         Return 1.0 if correct else 0.0
         """
 
-        full_prompt = self._format_prompt(prompt_template, article)
-        
-        output = self.llm(
-            full_prompt,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            stop=["</s>", "[INST]"],
-        )
+        key = (prompt_template, article)
+        if self.use_cache and key in self._cache:
+            predicted = self._cache[key]
 
-        response_text = output["choices"][0]["text"]
-        predicted_label = self._parse_response(response_text)
-        return 1.0 if predicted_label == true_label else 0.0
+        else:
+            full_prompt = self._format_prompt(prompt_template, article)
+            
+            output = self.llm(
+                full_prompt,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                stop=["</s>", "[INST]"],
+            )
+
+            response_text = output["choices"][0]["text"]
+            predicted = self._parse_response(response_text)
+            if self.use_cache:
+                self._cache[key] = predicted
+
+        return 1.0 if predicted == true_label else 0.0
 
     def evaluate(self, prompt_template: str) -> float:
 

@@ -15,8 +15,13 @@ class ActionSpace:
             self.remove_format_clarifier,
             self.simplify_language,
             self.rephrase_instruction,
-            self.remove_punctuation,
-            self.restore_punctuation
+            self.add_2_shot,
+            self.add_3_shot,
+            self.add_category_definitions,
+            self.add_anti_instruction,
+            self.strip_examples,
+            self.strip_definitions,
+            self.shorten_to_bare
         ]
 
         # tracking of actions taken place on prompts
@@ -26,10 +31,18 @@ class ActionSpace:
     def add_shot_example(self, prompt):
 
         """
-        Insert 1-shot example before instruction
+        Insert 4-shot example before instruction
         """
 
-        example = "Example: 'Apple stock rises 5%' -> Business \n\n"
+        if "Example:" in prompt:
+            return prompt
+
+        example = (
+            "Example: 'UN holds emergency session on border dispute' -> World\n"
+            "Example: 'Olympic committee weighs new sports for 2028 games' -> Sports\n"
+            "Example: 'Apple reports record quarterly earnings' -> Business\n"
+            "Example: 'Apple's AI chip ambitions face regulatory scrutiny in EU' -> Sci/Tech\n\n"
+        )
         modified_prompt = example + prompt
         self.applied_modification.append('shot_example')
         return modified_prompt
@@ -37,17 +50,20 @@ class ActionSpace:
     def remove_shot_example(self, prompt):
 
         """
-        Removes 1-shot example if it exists
+        Removes shot example if it exists
         """
 
-        lines = prompt.split('\n\n')
-        if lines and lines[0].startswith("Example:"):
-            modified_prompt = '\n\n'.join(lines[1:])
+        if not prompt.startswith("Example:"):
+            return prompt
 
-            if 'shot_example' in self.applied_modification:
-                self.applied_modification.remove('shot_example')
-            return modified_prompt
-        return prompt
+        lines = prompt.split('\n\n', 1)
+
+        if len(lines) < 2:
+            return prompt
+
+        if "shot_example" in self.applied_modification:
+            self.applied_modification.remove("shot_example")
+        return lines[-1]
 
     def add_format_clarifier(self, prompt):
 
@@ -77,17 +93,15 @@ class ActionSpace:
     def simplify_language(self, prompt):
 
         """
-        Shorten the instruction
+        Return a shorter but still grammatical prompt.
+        Doesn't mangle — instead returns a fixed, compressed instruction.
         """
 
-        keywords = ['Classify', 'Categorize', 'topic', 'category', 'following']
-        simplified = " ".join([word for word in prompt.split()
-                              if any(key in word for key in keywords)])
-        if simplified:
-            
-            modified_prompt = simplified + " the article"
-            self.applied_modification.append("simplified")
-            return modified_prompt        
+        if prompt.strip().startswith("Classify"):
+            return (
+                "Classify the news article into one of: "
+                "World, Sports, Business, Sci/Tech. Output only the label."
+            )
         return prompt
 
     def rephrase_instruction(self, prompt):
@@ -95,7 +109,6 @@ class ActionSpace:
         """
         Change instruction verb
         """
-
 
         rephrases = [
             ('Classify', 'Categorize'),
@@ -110,25 +123,94 @@ class ActionSpace:
                 return modified_prompt
         return prompt
 
-    def remove_punctuation(self, prompt):
+    def add_2_shot(self, prompt):
 
         """
-        Remove punctuation from instruction
+        Insert 2-shot examples in prompt
         """
 
-        import string
+        if prompt.startswith("Example:") and prompt.count("Example:") >= 2:
+            return prompt
+        examples = (
+            "Example: 'Apple stock rises 5%' -> Business\n"
+            "Example: 'Scientists discover new species' -> Sci/Tech\n\n"
+        )
+        self.applied_modification.append('shot_example')
+        return examples + self.remove_shot_example(prompt)
 
-        translator = str.maketrans('', '', string.punctuation)
-        modified_prompt = prompt.translate(translator)
-        self.applied_modification.append('removed_punctuation')
-        return modified_prompt
-
-    def restore_punctuation(self, prompt):
+    def add_3_shot(self, prompt):
 
         """
-        Restore punctuation if removed
+        Insert 3-shot examples in prompt
         """
 
-        if 'removed_punctuation' in self.applied_modification:
-            self.applied_modification.remove('removed_punctuation')
-        return prompt
+        if prompt.startswith("Example:") and prompt.count("Example:") >= 3:
+            return prompt
+        examples = (
+            "Example: 'Apple stock rises 5%' -> Business\n"
+            "Example: 'Scientists discover new species' -> Sci/Tech\n"
+            "Example: 'Insurgents Attack Iraq Election Offices' -> World\n\n"
+        )
+        self.applied_modification.append('shot_example')
+        return examples + self.remove_shot_example(prompt)
+
+    def add_category_definitions(self, prompt):
+
+        """
+        Insert category definitions in prompt
+        """
+
+        if "Definitions:" in prompt:
+            return prompt
+
+        defs = (
+            "Definitions:\n"
+            "World = international news, politics, conflicts\n"
+            "Sports = athletic events, teams, players\n"
+            "Business = companies, markets, earnings\n"
+            "Sci/Tech = science, technology, software, research\n\n"
+        )
+
+        return defs + prompt
+
+    def add_anti_instruction(self, prompt):
+
+        """
+        Insert Anti-Instruction to prompt
+        """
+
+        if "Do not explain" in prompt or "Output only" in prompt:
+            return prompt
+        return prompt + "\nDo not explain. Output only the label"
+
+    def strip_examples(self, prompt):
+
+        """
+        Removes examples from prompt
+        """
+
+        if not "Example:" in prompt:
+            return prompt
+
+        lines = prompt.split("\n\n", 1)
+        return lines[-1]
+
+    def strip_definitions(self, prompt):
+
+        """
+        Removes definitions from prompt
+        """
+
+        if not "Definitions:" in prompt:
+            return prompt
+
+        lines = prompt.split("\n\n", 1)
+        return lines[-1]
+
+    def shorten_to_bare(self, prompt):
+
+        """
+        Reduces a prompt to minimal instruction
+        """
+
+        return "Categorize the article into one of the following: World, Sports, Business, Sci/Tech"

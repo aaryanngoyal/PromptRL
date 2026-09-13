@@ -4,10 +4,21 @@ class RewardCalculator:
     Reward Calculation
     """
 
-    def __init__(self, prompt_harness, batch_size=5, num_evals=3):
+    def __init__(self, prompt_harness, num_evals=1):
         self.prompt_harness = prompt_harness
         self.num_evals = num_evals
-        self.batch = prompt_harness.eval_data.select(range(batch_size))
+
+        import random
+        rng = random.Random(42)
+        by_class = {0: [], 1: [], 2: [], 3: []}
+        for i, ex in enumerate(prompt_harness.eval_data):
+            by_class[ex["label"]].append(i)
+
+        batch_indices = []
+        for _, idxs in by_class.items():
+            batch_indices += rng.sample(idxs, 8)
+
+        self.batch = prompt_harness.eval_data.select(batch_indices)
 
     def get_stable_reward(self, prompt):
 
