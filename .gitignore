@@ -2,3 +2,4 @@ venv/
 rnd.py
 models/*
 !models/README.md
+__pycache__/
