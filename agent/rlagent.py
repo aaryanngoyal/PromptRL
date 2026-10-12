@@ -28,7 +28,6 @@ class RLAgent:
         Action Selection from Action Space
         """
 
-        state_key = self.state_rep.state_key(prompt)
         q_value = self.state_rep.get_q_value(prompt)
 
         # Choose random action
@@ -36,6 +35,8 @@ class RLAgent:
             return random.randint(0, self.num_actions - 1)
 
         # Choose best action
+        if not q_value:
+            return random.randint(0, self.num_actions - 1)
         base_action = max(q_value, key=q_value.get)
         return base_action
 
@@ -88,8 +89,8 @@ class RLAgent:
         current_q = q_value[action_index]
 
         # Future Q value
-        next_q_value = self.state_rep.get_q_value(new_prompt)
-        max_future_q = max(next_q_value.values() if next_q_value else 0)
+        next_q_value = self.state_rep.get_q_value(new_prompt) or {}
+        max_future_q = max(next_q_value.values(), default=0.0)
 
         # Q-learning formula
         new_q = current_q + self.learning_rate * (
@@ -112,14 +113,20 @@ class RLAgent:
 
         for episode in range(episodes):
             current_prompt = initial_prompt
+            episode_best_reward = -float("inf")
+            episode_best_prompt = current_prompt
 
             for _ in range(max_step):
                 action = self.choose_action(current_prompt)
                 current_prompt, reward = self.step(current_prompt, action)
+                if reward > episode_best_reward:
+                    episode_best_reward = reward
+                    episode_best_prompt = current_prompt
 
-            if reward > best_reward + 1e-6:
-                best_reward = reward
-                best_prompt = current_prompt
+
+            if episode_best_reward > best_reward + 1e-6:
+                best_reward = episode_best_reward
+                best_prompt = episode_best_prompt
                 no_improve = 0
 
             else:

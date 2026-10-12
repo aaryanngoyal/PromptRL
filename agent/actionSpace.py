@@ -24,10 +24,6 @@ class ActionSpace:
             self.shorten_to_bare
         ]
 
-        # tracking of actions taken place on prompts
-        
-        self.applied_modification  = []
-
     def add_shot_example(self, prompt):
 
         """
@@ -44,7 +40,6 @@ class ActionSpace:
             "Example: 'Apple's AI chip ambitions face regulatory scrutiny in EU' -> Sci/Tech\n\n"
         )
         modified_prompt = example + prompt
-        self.applied_modification.append('shot_example')
         return modified_prompt
 
     def remove_shot_example(self, prompt):
@@ -60,9 +55,6 @@ class ActionSpace:
 
         if len(lines) < 2:
             return prompt
-
-        if "shot_example" in self.applied_modification:
-            self.applied_modification.remove("shot_example")
         return lines[-1]
 
     def add_format_clarifier(self, prompt):
@@ -72,8 +64,7 @@ class ActionSpace:
         """
 
         clarifier = "Answer with only one word. Do not use punctuation."
-        modified_prompt = prompt + clarifier
-        self.applied_modification.append('format_clarifier')
+        modified_prompt = prompt.rstrip() + " " + clarifier
         return modified_prompt
 
     def remove_format_clarifier(self, prompt):
@@ -82,12 +73,9 @@ class ActionSpace:
         Remove format clarifier
         """
 
-        for marker in ["Answer with only one word", "Do not use punctuation"]:
-            prompt = prompt.replace(marker, "")
-        prompt = " ".join(prompt.replace("  ", " ").split())
-
-        if "format_clarifier" in self.applied_modification:
-            self.applied_modification.remove('format_clarifier')
+        clarifier = "Answer with only one word. Do not use punctuation."
+        if clarifier in prompt:
+            prompt = prompt.replace(clarifier, "").rstrip()
         return prompt
 
     def simplify_language(self, prompt):
@@ -119,7 +107,6 @@ class ActionSpace:
         for old, new in rephrases:
             if old in prompt:
                 modified_prompt = prompt.replace(old, new)
-                self.applied_modification.append('rephrase')
                 return modified_prompt
         return prompt
 
@@ -129,13 +116,12 @@ class ActionSpace:
         Insert 2-shot examples in prompt
         """
 
-        if prompt.startswith("Example:") and prompt.count("Example:") >= 2:
+        if "Example:" in prompt and prompt.count("Example:") >= 2:
             return prompt
         examples = (
             "Example: 'Apple stock rises 5%' -> Business\n"
             "Example: 'Scientists discover new species' -> Sci/Tech\n\n"
         )
-        self.applied_modification.append('shot_example')
         return examples + self.remove_shot_example(prompt)
 
     def add_3_shot(self, prompt):
@@ -144,14 +130,13 @@ class ActionSpace:
         Insert 3-shot examples in prompt
         """
 
-        if prompt.startswith("Example:") and prompt.count("Example:") >= 3:
+        if "Example:" in prompt and prompt.count("Example:") >= 3:
             return prompt
         examples = (
             "Example: 'Apple stock rises 5%' -> Business\n"
             "Example: 'Scientists discover new species' -> Sci/Tech\n"
             "Example: 'Insurgents Attack Iraq Election Offices' -> World\n\n"
         )
-        self.applied_modification.append('shot_example')
         return examples + self.remove_shot_example(prompt)
 
     def add_category_definitions(self, prompt):
