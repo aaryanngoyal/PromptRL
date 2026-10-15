@@ -11,16 +11,13 @@ class RewardCalculator:
         self.prompt_harness = prompt_harness
         self.num_evals = num_evals
         rng = random.Random(seed)
-
-        import random
-        rng = random.Random(seed)
         by_class = defaultdict(list)
         for i, ex in enumerate(prompt_harness.eval_data):
             by_class[ex["label"]].append(i)
 
         batch_indices = []
         for _, idxs in by_class.items():
-            batch_indices += rng.sample(idxs, min(by_class, len(idxs)))
+            batch_indices += rng.sample(idxs, len(idxs))
 
         self.batch = prompt_harness.eval_data.select(batch_indices)
 
