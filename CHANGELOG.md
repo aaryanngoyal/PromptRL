@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0] - 2026-10-17
 
 ### Added
 - Initial project structure with Q-learning prompt optimization
@@ -15,34 +15,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Batched reward calculator for 5-10x speedup
 - C++ `eval_core` library wrapping `llama.cpp` for single-forward-pass evaluation
 - `optimize_prompt.py` main entry point
-
-### Changed
-- (none yet)
-
-### Deprecated
-- (none yet)
-
-### Removed
-- (none yet)
-
-### Fixed
-- (none yet)
-
----
-
-## Unreleased
-
-### Added
-- (none yet)
-
-### Changed
-- (none yet)
-
-### Deprecated
-- (none yet)
-
-### Removed
-- (none yet)
-
-### Fixed
-- (none yet)
