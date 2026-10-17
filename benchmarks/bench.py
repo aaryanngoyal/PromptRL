@@ -1,6 +1,6 @@
 import ctypes, pathlib, os, sys, time, statistics
 
-LIB = str(next(pathlib.Path("build").rglob("libeval_core.dylib")).resolve())
+LIB = str(next(pathlib.Path("build").rglob("libeval_core.so")).resolve())
 lib = ctypes.CDLL(LIB)
 lib.eval_core_last_error.restype  = ctypes.c_char_p
 lib.eval_core_load_model.restype  = ctypes.c_void_p
