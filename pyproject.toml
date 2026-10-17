@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "promptrl"
+version = "0.1.0"
+description = "Q-Learning Prompt Optimization with Batched LLM Inference"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+url = "https://github.com/aaryanngoyal/PromptRL"
+
+[project.dependencies]
+llama-cpp-python >= 0.3.34
+datasets >= 5.0.1
+numpy >= 2.0.0
+torch >= 2.13.0
+tqdm >= 4.70.0
+
+[project.scripts]
+optimize-prompt = "optimize_prompt:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+promptRL = ["cpp/*.hpp", "cpp/*.so", "cpp/*.dylib"]
+
+[project.urls]
+Homepage = "https://github.com/aaryanngoyal/PromptRL"
+Documentation = "https://github.com/aaryanngoyal/PromptRL#readme"
+Source = "https://github.com/aaryanngoyal/PromptRL"
